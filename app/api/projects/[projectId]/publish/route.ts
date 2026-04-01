@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
-
+ 
 export async function POST(
   request: Request,
-  { params }: { params: { projectId: string } }
+  context: { params: Promise<{ projectId: string }> }
 ) {
+  const { projectId } = await context.params
+
   try {
     const user = await getCurrentUser()
 
@@ -15,7 +17,7 @@ export async function POST(
 
     const project = await prisma.project.findUnique({
       where: {
-        id: params.projectId,
+        id: projectId,
         userId: user.id,
       },
     })
@@ -25,7 +27,7 @@ export async function POST(
     }
 
     const updatedProject = await prisma.project.update({
-      where: { id: params.projectId },
+      where: { id: projectId },
       data: {
         status: 'PUBLISHED',
         updatedAt: new Date(),
