@@ -3,12 +3,13 @@ import { prisma } from '@/lib/prisma'
 import Preview from '@/components/Preview'
 
 interface PageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params
   const project = await prisma.project.findUnique({
-    where: { slug: params.slug, status: 'PUBLISHED' },
+    where: { slug: slug, status: 'PUBLISHED' },
     include: { pages: { orderBy: { sortOrder: 'asc' }, take: 1 } },
   })
 
@@ -27,8 +28,9 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function SitePage({ params }: PageProps) {
+  const { slug } = await params
   const project = await prisma.project.findUnique({
-    where: { slug: params.slug, status: 'PUBLISHED' },
+    where: { slug , status: 'PUBLISHED' },
     include: {
       pages: {
         include: {
