@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function PATCH(
+ export async function PATCH(
   request: Request,
-  { params }: { params: { projectId: string; pageId: string } }
+  context: { params: Promise<{ projectId: string; pageId: string }> }
 ) {
+  const { projectId, pageId } = await context.params
   try {
     const user = await getCurrentUser()
 
@@ -15,7 +16,7 @@ export async function PATCH(
 
     const project = await prisma.project.findUnique({
       where: {
-        id: params.projectId,
+        id: projectId,
         userId: user.id,
       },
     })
@@ -29,8 +30,8 @@ export async function PATCH(
 
     const page = await prisma.page.findUnique({
       where: {
-        id: params.pageId,
-        projectId: params.projectId,
+        id: pageId,
+        projectId: projectId,
       },
     })
 
@@ -40,7 +41,7 @@ export async function PATCH(
 
     if (sections) {
       await prisma.section.deleteMany({
-        where: { pageId: params.pageId },
+        where: { pageId: pageId },
       })
 
       await prisma.section.createMany({
@@ -48,13 +49,13 @@ export async function PATCH(
           type: section.type,
           content: section.content,
           sortOrder: index,
-          pageId: params.pageId,
+          pageId: pageId,
         })),
       })
     }
 
     const updatedPage = await prisma.page.update({
-      where: { id: params.pageId },
+      where: { id: pageId },
       data: {
         ...(title && { title }),
         ...(slug && { slug }),
@@ -69,7 +70,7 @@ export async function PATCH(
     })
 
     await prisma.project.update({
-      where: { id: params.projectId },
+      where: { id: projectId },
       data: { updatedAt: new Date() },
     })
 
